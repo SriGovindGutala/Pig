@@ -299,3 +299,25 @@ orderdatewithrevenuebyorder = FOREACH ordersjoin GENERATE orders::order_date, or
 orderdatewithrevenuebyordergrouped = GROUP orderdatewithrevenuebyorder BY orders::order_date;
 revenuebydate = FOREACH orderdatewithrevenuebyordergrouped GENERATE group, SUM(orderdatewithrevenuebyorder.order_items::order_item_subtotal) AS revenue_per_day;
 DUMP revenuebydate;
+
+-- Using UDF Functions
+-- First set of functions are Pre Defined Funtions
+-- Second set of functions are Piggybank where Pig developers provided it. (already available by default) we just need to download the latest version, register in the session and use it
+-- Third set of functions are UDF's UDAF's, etc. As we dev's we need to develop using Pig API's and build a JAR file, register it and use it
+-- For second and third sets we need to get the JAR file, Register it, (optional) define an alias, use it in the scripts
+Step 1: search for piggybank location 
+find / -name "*piggybank*"
+/usr/hdp/2.3.2.0-2950/pig/piggybank.jar
+Step 2: check the classes in the jar
+jar tvf /usr/hdp/2.3.2.0-2950/pig/piggybank.jar
+Step 2: Register
+REGISTER /usr/hdp/2.3.2.0-2950/pig/piggybank.jar
+departments = LOAD 'pig_demo.departments' USING org.apache.hive.hcatalog.pig.HCatLoader();
+departments_upper = FOREACH departments GENERATE department_id, org.apache.pig.piggybank.evaluation.string.UPPER(department_name) AS department_name;
+-- OR
+DEFINE UPPER org.apache.pig.piggybank.evaluation.string.UPPER
+departments_upper = FOREACH departments GENERATE department_id, UPPER(department_name) AS department_name;
+DUMP departments_upper;
+
+You can do the same thing by putting in a script file like pig_demo.txt and run it
+pig -f pig_demo.txt -useHCatalog
